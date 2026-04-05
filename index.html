@@ -3,26 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>Titan Build IA</title>
+
   <style>
     body {
       font-family: Arial;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: white;
       margin: 0;
+      background: #f5f5f5;
+    }
+
+    header {
+      background: #1e3c72;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
       padding: 20px;
     }
 
-    .app {
+    .card {
       background: white;
-      color: black;
       padding: 20px;
       border-radius: 15px;
-      max-width: 400px;
-      margin: auto;
-    }
-
-    h1 {
-      text-align: center;
+      margin-bottom: 20px;
     }
 
     input, select, button {
@@ -34,80 +40,80 @@
     }
 
     button {
-      background: #2a5298;
+      background: #1e3c72;
       color: white;
       cursor: pointer;
-    }
-
-    .result, .lista {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f4f4f4;
-      border-radius: 10px;
+      font-weight: bold;
     }
 
     .item {
       border-bottom: 1px solid #ccc;
-      margin-bottom: 10px;
+      margin-top: 10px;
       padding-bottom: 10px;
-    }
-
-    img {
-      width: 100%;
-      margin-top: 5px;
-      border-radius: 10px;
     }
   </style>
 </head>
+
 <body>
 
-<div class="app">
+<header>
   <h1>🏗️ Titan Build IA</h1>
+  <p>Filtramos clientes reales para constructores</p>
+</header>
 
-  <input id="nombre" placeholder="Nombre del cliente">
-  <input id="telefono" placeholder="Teléfono">
+<div class="container">
 
-  <label>Tipo de proyecto</label>
-  <select id="tipo">
-    <option>Remodelación</option>
-    <option>Casa nueva</option>
-    <option>Reparación</option>
-  </select>
+  <div class="card">
+    <h2>Solicita tu proyecto</h2>
 
-  <input type="number" id="tamano" placeholder="Tamaño (m²)">
-  <input type="number" id="presupuesto" placeholder="Presupuesto (COP)">
+    <input id="nombre" placeholder="Nombre">
+    <input id="telefono" placeholder="Teléfono">
+    <input id="ciudad" placeholder="Ciudad">
 
-  <label>Urgencia</label>
-  <select id="urgencia">
-    <option>Alta</option>
-    <option>Media</option>
-    <option>Baja</option>
-  </select>
+    <select id="tipo">
+      <option>Remodelación</option>
+      <option>Casa nueva</option>
+      <option>Reparación</option>
+    </select>
 
-  <label>Subir fotos</label>
-  <input type="file" id="foto" accept="image/*">
+    <input type="number" id="tamano" placeholder="Tamaño (m²)">
+    <input type="number" id="presupuesto" placeholder="Presupuesto (COP)">
 
-  <button onclick="generar()">Generar Cotización</button>
+    <select id="urgencia">
+      <option>Alta</option>
+      <option>Media</option>
+      <option>Baja</option>
+    </select>
 
-  <div id="resultado" class="result" style="display:none;"></div>
+    <button onclick="generar()">🧠 Analizar Proyecto</button>
 
-  <div class="lista">
-    <h3>📋 Clientes registrados</h3>
+    <div id="resultado"></div>
+
+    <button onclick="enviar()" style="margin-top:15px;">
+      📤 Enviar al constructor
+    </button>
+  </div>
+
+  <div class="card">
+    <h2>📋 Clientes registrados</h2>
     <div id="lista"></div>
   </div>
+
 </div>
 
 <script>
-let solicitudes = JSON.parse(localStorage.getItem("solicitudes")) || [];
 
+let solicitudes = JSON.parse(localStorage.getItem("solicitudes")) || [];
+let ultimoProyecto = null;
+
+// 🧠 ANALIZAR PROYECTO
 function generar() {
   const nombre = document.getElementById("nombre").value;
   const telefono = document.getElementById("telefono").value;
+  const ciudad = document.getElementById("ciudad").value;
   const tipo = document.getElementById("tipo").value;
   const tamano = document.getElementById("tamano").value;
   const presupuesto = document.getElementById("presupuesto").value;
-  const urgencia = document.getElementById("urgencia").value;
-  const foto = document.getElementById("foto").files[0];
 
   if (!nombre || !telefono || !tamano || !presupuesto) {
     alert("Completa todos los campos");
@@ -116,58 +122,89 @@ function generar() {
 
   let estimacion = tamano * 800000;
 
- let nivel = "Bajo";
-let recomendacion = "";
-let estado = "";
+  let nivel = "";
+  let estado = "";
+  let recomendacion = "";
 
-// Lógica más inteligente
-if (presupuesto >= estimacion) {
-  nivel = "Alto";
-  estado = "🟢 Cliente ideal";
-  recomendacion = "Proyecto viable con buen presupuesto.";
-}
-else if (presupuesto >= estimacion * 0.7) {
-  nivel = "Medio";
-  estado = "🟡 Cliente potencial";
-  recomendacion = "Puede realizarse ajustando materiales o diseño.";
-}
-else {
-  nivel = "Bajo";
-  estado = "🔴 No viable";
-  recomendacion = "El presupuesto es demasiado bajo para el tamaño del proyecto.";
- 
-}
-  
+  if (presupuesto >= estimacion) {
+    nivel = "Alto";
+    estado = "🟢 Cliente ideal";
+    recomendacion = "Proyecto viable con buen presupuesto.";
+  } else if (presupuesto >= estimacion * 0.7) {
+    nivel = "Medio";
+    estado = "🟡 Cliente potencial";
+    recomendacion = "Se puede ajustar el proyecto.";
+  } else {
+    nivel = "Bajo";
+    estado = "🔴 No viable";
+    recomendacion = "Presupuesto insuficiente.";
+  }
+
   const proyecto = {
     nombre,
     telefono,
+    ciudad,
     tipo,
     tamano,
     presupuesto,
-    urgencia,
     nivel,
-    fotoURL
+    estado
   };
 
-  solicitudes.push(proyecto);
+  ultimoProyecto = proyecto;
+
+  document.getElementById("resultado").innerHTML = `
+    <p><b>${nombre}</b> (${ciudad})</p>
+    <p>${tipo} - ${tamano} m²</p>
+    <p>$${Number(presupuesto).toLocaleString()} COP</p>
+
+    <hr>
+
+    <p><b>${estado}</b></p>
+    <p>${recomendacion}</p>
+  `;
+}
+
+// 📤 ENVIAR AL CONSTRUCTOR (EMAIL REAL)
+function enviar() {
+  if (!ultimoProyecto) {
+    alert("Primero analiza un proyecto");
+    return;
+  }
+
+  if (ultimoProyecto.nivel === "Bajo") {
+    alert("❌ Cliente no viable");
+    return;
+  }
+
+  const mensaje = `
+Nuevo cliente desde Titan Build IA:
+
+Nombre: ${ultimoProyecto.nombre}
+Teléfono: ${ultimoProyecto.telefono}
+Ciudad: ${ultimoProyecto.ciudad}
+
+Proyecto: ${ultimoProyecto.tipo}
+Tamaño: ${ultimoProyecto.tamano} m²
+Presupuesto: $${Number(ultimoProyecto.presupuesto).toLocaleString()} COP
+
+Clasificación: ${ultimoProyecto.estado}
+  `;
+
+  const correo = "cruzdumar123@gmail.com"; // 🔥 CAMBIA ESTO
+
+  const link = `mailto:${correo}?subject=Nuevo Cliente Titan Build IA&body=${encodeURIComponent(mensaje)}`;
+
+  // Guardar también
+  solicitudes.push(ultimoProyecto);
   localStorage.setItem("solicitudes", JSON.stringify(solicitudes));
 
   mostrarLista();
 
-  document.getElementById("resultado").innerHTML = `
-  <p><b>${nombre}</b> (${ciudad})</p>
-  <p>${tipo} - ${tamano} m²</p>
-  <p>$${Number(presupuesto).toLocaleString()} COP</p>
-
-  <hr>
-
-  <p><b>Clasificación:</b> ${estado}</p>
-  <p><b>Nivel:</b> ${nivel}</p>
-  <p><b>Recomendación IA:</b> ${recomendacion}</p>
-`;
-  document.getElementById("resultado").style.display = "block";
+  window.location.href = link;
 }
 
+// 📋 MOSTRAR CLIENTES
 function mostrarLista() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
@@ -175,18 +212,18 @@ function mostrarLista() {
   solicitudes.forEach((s) => {
     lista.innerHTML += `
       <div class="item">
-        <b>${s.nombre}</b><br>
+        <b>${s.nombre}</b> - ${s.ciudad}<br>
         📞 ${s.telefono}<br>
         ${s.tipo} - ${s.tamano} m²<br>
         $${Number(s.presupuesto).toLocaleString()} COP<br>
-        Nivel: ${s.nivel}
-        ${s.fotoURL ? `<img src="${s.fotoURL}">` : ""}
+        ${s.estado}
       </div>
     `;
   });
 }
 
 mostrarLista();
+
 </script>
 
 </body>
