@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Titan Build IA</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .app {
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input, select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #2a5298;
+      color: white;
+      cursor: pointer;
+    }
+
+    .result, .lista {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f4f4f4;
+      border-radius: 10px;
+    }
+
+    .item {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+
+    img {
+      width: 100%;
+      margin-top: 5px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🏗️ Titan Build IA</h1>
+
+  <input id="nombre" placeholder="Nombre del cliente">
+  <input id="telefono" placeholder="Teléfono">
+
+  <label>Tipo de proyecto</label>
+  <select id="tipo">
+    <option>Remodelación</option>
+    <option>Casa nueva</option>
+    <option>Reparación</option>
+  </select>
+
+  <input type="number" id="tamano" placeholder="Tamaño (m²)">
+  <input type="number" id="presupuesto" placeholder="Presupuesto (COP)">
+
+  <label>Urgencia</label>
+  <select id="urgencia">
+    <option>Alta</option>
+    <option>Media</option>
+    <option>Baja</option>
+  </select>
+
+  <label>Subir fotos</label>
+  <input type="file" id="foto" accept="image/*">
+
+  <button onclick="generar()">Generar Cotización</button>
+
+  <div id="resultado" class="result" style="display:none;"></div>
+
+  <div class="lista">
+    <h3>📋 Clientes registrados</h3>
+    <div id="lista"></div>
+  </div>
+</div>
+
+<script>
+let solicitudes = JSON.parse(localStorage.getItem("solicitudes")) || [];
+
+function generar() {
+  const nombre = document.getElementById("nombre").value;
+  const telefono = document.getElementById("telefono").value;
+  const tipo = document.getElementById("tipo").value;
+  const tamano = document.getElementById("tamano").value;
+  const presupuesto = document.getElementById("presupuesto").value;
+  const urgencia = document.getElementById("urgencia").value;
+  const foto = document.getElementById("foto").files[0];
+
+  if (!nombre || !telefono || !tamano || !presupuesto) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  let estimacion = tamano * 800000;
+
+  let nivel = "Básico";
+  if (presupuesto > estimacion) nivel = "Alto";
+  else if (presupuesto > estimacion * 0.7) nivel = "Medio";
+
+  let fotoURL = "";
+  if (foto) {
+    fotoURL = URL.createObjectURL(foto);
+  }
+
+  const proyecto = {
+    nombre,
+    telefono,
+    tipo,
+    tamano,
+    presupuesto,
+    urgencia,
+    nivel,
+    fotoURL
+  };
+
+  solicitudes.push(proyecto);
+  localStorage.setItem("solicitudes", JSON.stringify(solicitudes));
+
+  mostrarLista();
+
+  document.getElementById("resultado").innerHTML = `
+    <h3>📊 Resultado</h3>
+    <p><b>${nombre}</b> (${telefono})</p>
+    <p>${tipo} - ${tamano} m²</p>
+    <p>$${Number(presupuesto).toLocaleString()} COP</p>
+    <p>Nivel: ${nivel}</p>
+  `;
+  document.getElementById("resultado").style.display = "block";
+}
+
+function mostrarLista() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  solicitudes.forEach((s) => {
+    lista.innerHTML += `
+      <div class="item">
+        <b>${s.nombre}</b><br>
+        📞 ${s.telefono}<br>
+        ${s.tipo} - ${s.tamano} m²<br>
+        $${Number(s.presupuesto).toLocaleString()} COP<br>
+        Nivel: ${s.nivel}
+        ${s.fotoURL ? `<img src="${s.fotoURL}">` : ""}
+      </div>
+    `;
+  });
+}
+
+mostrarLista();
+</script>
+
+</body>
+</html>
