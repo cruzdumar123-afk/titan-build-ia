@@ -116,15 +116,28 @@ function generar() {
 
   let estimacion = tamano * 800000;
 
-  let nivel = "Básico";
-  if (presupuesto > estimacion) nivel = "Alto";
-  else if (presupuesto > estimacion * 0.7) nivel = "Medio";
+ let nivel = "Bajo";
+let recomendacion = "";
+let estado = "";
 
-  let fotoURL = "";
-  if (foto) {
-    fotoURL = URL.createObjectURL(foto);
-  }
-
+// Lógica más inteligente
+if (presupuesto >= estimacion) {
+  nivel = "Alto";
+  estado = "🟢 Cliente ideal";
+  recomendacion = "Proyecto viable con buen presupuesto.";
+}
+else if (presupuesto >= estimacion * 0.7) {
+  nivel = "Medio";
+  estado = "🟡 Cliente potencial";
+  recomendacion = "Puede realizarse ajustando materiales o diseño.";
+}
+else {
+  nivel = "Bajo";
+  estado = "🔴 No viable";
+  recomendacion = "El presupuesto es demasiado bajo para el tamaño del proyecto.";
+ 
+}
+  
   const proyecto = {
     nombre,
     telefono,
@@ -142,12 +155,16 @@ function generar() {
   mostrarLista();
 
   document.getElementById("resultado").innerHTML = `
-    <h3>📊 Resultado</h3>
-    <p><b>${nombre}</b> (${telefono})</p>
-    <p>${tipo} - ${tamano} m²</p>
-    <p>$${Number(presupuesto).toLocaleString()} COP</p>
-    <p>Nivel: ${nivel}</p>
-  `;
+  <p><b>${nombre}</b> (${ciudad})</p>
+  <p>${tipo} - ${tamano} m²</p>
+  <p>$${Number(presupuesto).toLocaleString()} COP</p>
+
+  <hr>
+
+  <p><b>Clasificación:</b> ${estado}</p>
+  <p><b>Nivel:</b> ${nivel}</p>
+  <p><b>Recomendación IA:</b> ${recomendacion}</p>
+`;
   document.getElementById("resultado").style.display = "block";
 }
 
