@@ -1,228 +1,271 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Titan Build IA</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ato</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      background: #f5f5f5;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: black;
+  display: flex;
+  justify-content: center;
+}
 
-    header {
-      background: #1e3c72;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
+.app {
+  width: 100%;
+  max-width: 400px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #020617, #0f172a);
+  color: white;
+}
 
-    .container {
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-    }
+header {
+  text-align: center;
+  padding: 30px;
+}
 
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      margin-bottom: 20px;
-    }
+header p {
+  color: #94a3b8;
+}
 
-    input, select, button {
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-    }
+.container {
+  padding: 15px;
+}
 
-    button {
-      background: #1e3c72;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
+.card {
+  background: rgba(30,41,59,0.8);
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+}
 
-    .item {
-      border-bottom: 1px solid #ccc;
-      margin-top: 10px;
-      padding-bottom: 10px;
-    }
-  </style>
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.accept {
+  background: #22c55e;
+}
+
+.disabled {
+  background: gray;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #1e293b;
+  color: white;
+}
+
+.hidden { display: none; }
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.verde { background: green; }
+.amarillo { background: orange; }
+.rojo { background: red; }
+
+.asignado {
+  background: #1d4ed8;
+}
+</style>
 </head>
 
 <body>
 
+<div class="app">
+
 <header>
-  <h1>🏗️ Titan Build IA</h1>
-  <p>Filtramos clientes reales para constructores</p>
+  <h1>Ato</h1>
+  <p>Construir nunca fue tan fácil.</p>
 </header>
 
 <div class="container">
 
-  <div class="card">
-    <h2>Solicita tu proyecto</h2>
+<div id="inicio" class="card">
+  <h3>¿Quién eres?</h3>
+  <button onclick="mostrarCliente()">👤 Cliente</button>
+  <button onclick="mostrarConstructor()">🏗️ Constructor</button>
+</div>
 
-    <input id="nombre" placeholder="Nombre">
-    <input id="telefono" placeholder="Teléfono">
-    <input id="ciudad" placeholder="Ciudad">
+<div id="cliente" class="card hidden">
+  <h3>Nuevo proyecto</h3>
 
-    <select id="tipo">
-      <option>Remodelación</option>
-      <option>Casa nueva</option>
-      <option>Reparación</option>
-    </select>
+  <input id="nombre" placeholder="Nombre">
+  <input id="telefono" placeholder="Teléfono">
+  <input id="ciudad" placeholder="Ciudad">
 
-    <input type="number" id="tamano" placeholder="Tamaño (m²)">
-    <input type="number" id="presupuesto" placeholder="Presupuesto (COP)">
+  <select id="tipo">
+    <option>Remodelación</option>
+    <option>Casa nueva</option>
+    <option>Reparación</option>
+  </select>
 
-    <select id="urgencia">
-      <option>Alta</option>
-      <option>Media</option>
-      <option>Baja</option>
-    </select>
+  <input id="tamano" type="number" placeholder="Tamaño m²">
+  <input id="presupuesto" type="number" placeholder="Presupuesto">
 
-    <button onclick="generar()">🧠 Analizar Proyecto</button>
+  <select id="urgencia">
+    <option>Alta</option>
+    <option>Media</option>
+    <option>Baja</option>
+  </select>
 
-    <div id="resultado"></div>
+  <button onclick="generar()">Analizar proyecto</button>
 
-    <button onclick="enviar()" style="margin-top:15px;">
-      📤 Enviar al constructor
-    </button>
-  </div>
+  <div id="resultado"></div>
 
-  <div class="card">
-    <h2>📋 Clientes registrados</h2>
-    <div id="lista"></div>
-  </div>
+  <button onclick="guardar()">Enviar proyecto</button>
+  <button onclick="volver()">⬅ Volver</button>
+</div>
+
+<div id="constructor" class="card hidden">
+  <h3>Proyectos disponibles</h3>
+  <div id="lista"></div>
+  <button onclick="volver()">⬅ Volver</button>
+</div>
+
+</div>
 
 </div>
 
 <script>
 
-let solicitudes = JSON.parse(localStorage.getItem("solicitudes")) || [];
-let ultimoProyecto = null;
+let proyectos = JSON.parse(localStorage.getItem("proyectos")) || [];
+let actual = null;
 
-// 🧠 ANALIZAR PROYECTO
+const inicio = document.getElementById("inicio");
+const cliente = document.getElementById("cliente");
+const constructorDiv = document.getElementById("constructor");
+
+function guardarStorage() {
+  localStorage.setItem("proyectos", JSON.stringify(proyectos));
+}
+
+function mostrarCliente() {
+  inicio.classList.add("hidden");
+  cliente.classList.remove("hidden");
+}
+
+function mostrarConstructor() {
+  inicio.classList.add("hidden");
+  constructorDiv.classList.remove("hidden");
+  mostrarLista();
+}
+
+function volver() {
+  inicio.classList.remove("hidden");
+  cliente.classList.add("hidden");
+  constructorDiv.classList.add("hidden");
+}
+
 function generar() {
-  const nombre = document.getElementById("nombre").value;
-  const telefono = document.getElementById("telefono").value;
-  const ciudad = document.getElementById("ciudad").value;
-  const tipo = document.getElementById("tipo").value;
-  const tamano = document.getElementById("tamano").value;
-  const presupuesto = document.getElementById("presupuesto").value;
+  let nombre = document.getElementById("nombre").value;
+  let telefono = document.getElementById("telefono").value;
+  let ciudad = document.getElementById("ciudad").value;
+  let tipo = document.getElementById("tipo").value;
+  let tamano = document.getElementById("tamano").value;
+  let presupuesto = document.getElementById("presupuesto").value;
 
   if (!nombre || !telefono || !tamano || !presupuesto) {
     alert("Completa todos los campos");
     return;
   }
 
-  let estimacion = tamano * 800000;
+  let score = presupuesto / tamano;
 
-  let nivel = "";
   let estado = "";
-  let recomendacion = "";
+  let clase = "";
 
-  if (presupuesto >= estimacion) {
-    nivel = "Alto";
-    estado = "🟢 Cliente ideal";
-    recomendacion = "Proyecto viable con buen presupuesto.";
-  } else if (presupuesto >= estimacion * 0.7) {
-    nivel = "Medio";
-    estado = "🟡 Cliente potencial";
-    recomendacion = "Se puede ajustar el proyecto.";
+  if (score > 800000) {
+    estado = "Ideal";
+    clase = "verde";
+  } else if (score > 500000) {
+    estado = "Potencial";
+    clase = "amarillo";
   } else {
-    nivel = "Bajo";
-    estado = "🔴 No viable";
-    recomendacion = "Presupuesto insuficiente.";
+    estado = "No viable";
+    clase = "rojo";
   }
 
-  const proyecto = {
+  actual = {
     nombre,
     telefono,
     ciudad,
     tipo,
     tamano,
     presupuesto,
-    nivel,
-    estado
+    estado,
+    clase,
+    score,
+    asignado: false
   };
 
-  ultimoProyecto = proyecto;
-
   document.getElementById("resultado").innerHTML = `
-    <p><b>${nombre}</b> (${ciudad})</p>
-    <p>${tipo} - ${tamano} m²</p>
-    <p>$${Number(presupuesto).toLocaleString()} COP</p>
-
-    <hr>
-
     <p><b>${estado}</b></p>
-    <p>${recomendacion}</p>
+    <span class="badge ${clase}">${estado}</span>
   `;
 }
 
-// 📤 ENVIAR AL CONSTRUCTOR (EMAIL REAL)
-function enviar() {
-  if (!ultimoProyecto) {
-    alert("Primero analiza un proyecto");
-    return;
-  }
+function guardar() {
+  if (!actual) return alert("Analiza primero");
 
-  if (ultimoProyecto.nivel === "Bajo") {
-    alert("❌ Cliente no viable");
-    return;
-  }
+  proyectos.push(actual);
+  guardarStorage();
 
-  const mensaje = `
-Nuevo cliente desde Titan Build IA:
+  alert("Proyecto enviado");
+}
 
-Nombre: ${ultimoProyecto.nombre}
-Teléfono: ${ultimoProyecto.telefono}
-Ciudad: ${ultimoProyecto.ciudad}
-
-Proyecto: ${ultimoProyecto.tipo}
-Tamaño: ${ultimoProyecto.tamano} m²
-Presupuesto: $${Number(ultimoProyecto.presupuesto).toLocaleString()} COP
-
-Clasificación: ${ultimoProyecto.estado}
-  `;
-
-  const correo = "cruzdumar123@gmail.com"; // 🔥 CAMBIA ESTO
-
-  const link = `mailto:${correo}?subject=Nuevo Cliente Titan Build IA&body=${encodeURIComponent(mensaje)}`;
-
-  // Guardar también
-  solicitudes.push(ultimoProyecto);
-  localStorage.setItem("solicitudes", JSON.stringify(solicitudes));
-
+function aceptar(index) {
+  proyectos[index].asignado = true;
+  guardarStorage();
   mostrarLista();
-
-  window.location.href = link;
 }
 
-// 📋 MOSTRAR CLIENTES
 function mostrarLista() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  solicitudes.forEach((s) => {
+  proyectos.sort((a,b)=>b.score-a.score);
+
+  proyectos.forEach((p, i) => {
     lista.innerHTML += `
-      <div class="item">
-        <b>${s.nombre}</b> - ${s.ciudad}<br>
-        📞 ${s.telefono}<br>
-        ${s.tipo} - ${s.tamano} m²<br>
-        $${Number(s.presupuesto).toLocaleString()} COP<br>
-        ${s.estado}
+      <div>
+        <b>${p.nombre}</b> - ${p.ciudad}<br>
+        ${p.tipo} - ${p.tamano} m²<br>
+        $${p.presupuesto}<br>
+
+        <span class="badge ${p.asignado ? "asignado" : p.clase}">
+          ${p.asignado ? "Asignado" : p.estado}
+        </span>
+
+        ${
+          !p.asignado
+          ? `<button class="accept" onclick="aceptar(${i})">Aceptar proyecto</button>`
+          : `<button class="disabled">Ya asignado</button>`
+        }
       </div>
+      <hr>
     `;
   });
 }
-
-mostrarLista();
 
 </script>
 
